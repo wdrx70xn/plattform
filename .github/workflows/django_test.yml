@@ -1,156 +1,172 @@
 name: Django CI
-
-on:
+'on':
   push:
     branches:
-      - master
-      - main
-      - dev
+    - master
+    - main
+    - dev
   pull_request:
     branches:
-      - master
-      - main
-      - dev
-
+    - master
+    - main
+    - dev
 env:
   INIT_PATH: plattform/
   FAIL_LEVEL: WARNING
   MANAGE_PATH: manage.py
   REQS_PATH: requirements.txt
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#  output: output.txt
-
 jobs:
   test:
     runs-on: ${{ matrix.os }}
     name: ${{ matrix.os }}  (python v${{ matrix.python-version }}  django v${{ matrix.django-version}})
     strategy:
-      # By default, GitHub will maximize the number of jobs run in parallel
-      # depending on the available runners on GitHub-hosted virtual machines.
-      # max-parallel: 8
       fail-fast: false
       matrix:
-        os: [ubuntu-20.04]
+        os:
+        - ubuntu-latest
         python-version:
-          - "2.7"
-          - "3.6"
-          - "3.7"
-          - "3.8"
-          - "3.9"
-          - "3.10-dev"
+        - '2.7'
+        - '3.6'
+        - '3.7'
+        - '3.8'
+        - '3.9'
+        - 3.10-dev
         django-version:
-          - "1.11"  # LTS
-          - "2.0"
-          - "2.1"
-          - "2.2"  # LTS
-          - "3.0"
-          - "3.1"
-          - "3.2"  # LTS
+        - '1.11'
+        - '2.0'
+        - '2.1'
+        - '2.2'
+        - '3.0'
+        - '3.1'
+        - '3.2'
         exclude:
-          # Python 2.7 is compatible with Django 1.11
-          - python-version: "2.7"
-            django-version: "2.0"
-          - python-version: "2.7"
-            django-version: "2.1"
-          - python-version: "2.7"
-            django-version: "2.2"
-          - python-version: "2.7"
-            django-version: "3.0"
-          - python-version: "2.7"
-            django-version: "3.1"
-          - python-version: "2.7"
-            django-version: "3.2"
-          # Python 3.8 is compatible with Django 2.2+
-          - python-version: "3.8"
-            django-version: "1.11"
-          - python-version: "3.8"
-            django-version: "2.0"
-          - python-version: "3.8"
-            django-version: "2.1"
-          # Python 3.9 is compatible with Django 3.1+
-          - python-version: "3.9"
-            django-version: "1.11"
-          - python-version: "3.9"
-            django-version: "2.0"
-          - python-version: "3.9"
-            django-version: "2.1"
-          - python-version: "3.9"
-            django-version: "2.2"
-          - python-version: "3.9"
-            django-version: "3.0"
-          # Python 3.10 is compatible with Django 3.1+
-          - python-version: "3.10-dev"
-            django-version: "1.11"
-          - python-version: "3.10-dev"
-            django-version: "2.0"
-          - python-version: "3.10-dev"
-            django-version: "2.1"
-          - python-version: "3.10-dev"
-            django-version: "2.2"
-          - python-version: "3.10-dev"
-            django-version: "3.0"
-          - python-version: "3.10-dev"
-            django-version: "3.1"
+        - python-version: '2.7'
+          django-version: '2.0'
+        - python-version: '2.7'
+          django-version: '2.1'
+        - python-version: '2.7'
+          django-version: '2.2'
+        - python-version: '2.7'
+          django-version: '3.0'
+        - python-version: '2.7'
+          django-version: '3.1'
+        - python-version: '2.7'
+          django-version: '3.2'
+        - python-version: '3.8'
+          django-version: '1.11'
+        - python-version: '3.8'
+          django-version: '2.0'
+        - python-version: '3.8'
+          django-version: '2.1'
+        - python-version: '3.9'
+          django-version: '1.11'
+        - python-version: '3.9'
+          django-version: '2.0'
+        - python-version: '3.9'
+          django-version: '2.1'
+        - python-version: '3.9'
+          django-version: '2.2'
+        - python-version: '3.9'
+          django-version: '3.0'
+        - python-version: 3.10-dev
+          django-version: '1.11'
+        - python-version: 3.10-dev
+          django-version: '2.0'
+        - python-version: 3.10-dev
+          django-version: '2.1'
+        - python-version: 3.10-dev
+          django-version: '2.2'
+        - python-version: 3.10-dev
+          django-version: '3.0'
+        - python-version: 3.10-dev
+          django-version: '3.1'
     steps:
-      - name: Install System Dependencies
-        run: |
-          sudo add-apt-repository ppa:ubuntugis/ppa && sudo apt-get update
-          sudo apt-get update
-          sudo apt-get install python3-testresources
-          sudo apt-get install build-essential
-          sudo apt-get install gdal-bin
-          sudo apt-get install libgdal-dev
-          sudo apt-get install python3-gdal
-          export CPLUS_INCLUDE_PATH=/usr/include/gdal
-          export C_INCLUDE_PATH=/usr/include/gdal
-      - name: Check out current branch
-        uses: actions/checkout@v2
-        with:
-          ref: ${{ github.ref }}
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
-        with:
-          python-version: ${{ matrix.python-version }}
-      - name: Upgrade pip version
-        run: |
-          python -m pip install -U pip
-      - name: Upgrade django version
-        run: |
-          python -m pip install "Django~=${{ matrix.django-version }}.0"
-      - name: Python and Django versions
-        run: |
-          echo "Python ${{ matrix.python-version }} -> Django ${{ matrix.django-version }}"
-          python --version
-          echo "Django: `django-admin --version`"
-      - name: Install Python/Django Dependencies
-        run: |
-          sudo pip install -r ${REQS_PATH}
-          sudo pip install coverage coveralls
-          sudo pip install pydeps
-      - name: Run Security Check
-        run: |
-          python ${MANAGE_PATH} check --deploy --fail-level ${FAIL} &> "output.txt"
-          echo -e "\n--------- Django Security Check results ---------"
-          cat "output.txt"
-      - name: Create Dependency Graph
-        run: |
-          python pydeps  ${INIT_PATH} --max-bacon=4 --cluster -o dependencies -T svg
-      - name: Upload Security Check Results
-        uses: actions/upload-artifact@v2
-        with:
-          name: security-check-output
-          path: |
-            "output.txt"
-      - name: Upload Dependency Graph
-        uses: actions/upload-artifact@v2
-        with:
-          name: dependency-graph-output
-          path: |
-            "dependencies.svg"
-      - name: Run Tests
-        run: |
-          coverage run --omit=*/tests/* ${MANAGE_PATH} test
-      - name: Coveralls
-        if: matrix.os  == 'ubuntu-20.04' && matrix.python-version == '3.9' && matrix.django-version == '3.2'
-        run: coveralls --service=github
+    - name: Install System Dependencies
+      run: 'sudo add-apt-repository ppa:ubuntugis/ppa && sudo apt-get update
 
+        sudo apt-get update
+
+        sudo apt-get install python3-testresources
+
+        sudo apt-get install build-essential
+
+        sudo apt-get install gdal-bin
+
+        sudo apt-get install libgdal-dev
+
+        sudo apt-get install python3-gdal
+
+        export CPLUS_INCLUDE_PATH=/usr/include/gdal
+
+        export C_INCLUDE_PATH=/usr/include/gdal
+
+        '
+    - name: Check out current branch
+      uses: actions/checkout@v2
+      with:
+        ref: ${{ github.ref }}
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Upgrade pip version
+      run: 'python -m pip install -U pip
+
+        '
+    - name: Upgrade django version
+      run: 'python -m pip install "Django~=${{ matrix.django-version }}.0"
+
+        '
+    - name: Python and Django versions
+      run: 'echo "Python ${{ matrix.python-version }} -> Django ${{ matrix.django-version
+        }}"
+
+        python --version
+
+        echo "Django: `django-admin --version`"
+
+        '
+    - name: Install Python/Django Dependencies
+      run: 'sudo pip install -r ${REQS_PATH}
+
+        sudo pip install coverage coveralls
+
+        sudo pip install pydeps
+
+        '
+    - name: Run Security Check
+      run: 'python ${MANAGE_PATH} check --deploy --fail-level ${FAIL} &> "output.txt"
+
+        echo -e "\n--------- Django Security Check results ---------"
+
+        cat "output.txt"
+
+        '
+    - name: Create Dependency Graph
+      run: 'python pydeps  ${INIT_PATH} --max-bacon=4 --cluster -o dependencies -T
+        svg
+
+        '
+    - name: Upload Security Check Results
+      uses: actions/upload-artifact@v2
+      with:
+        name: security-check-output
+        path: '"output.txt"
+
+          '
+    - name: Upload Dependency Graph
+      uses: actions/upload-artifact@v2
+      with:
+        name: dependency-graph-output
+        path: '"dependencies.svg"
+
+          '
+    - name: Run Tests
+      run: 'coverage run --omit=*/tests/* ${MANAGE_PATH} test
+
+        '
+    - name: Coveralls
+      if: matrix.os  == 'ubuntu-20.04' && matrix.python-version == '3.9' && matrix.django-version
+        == '3.2'
+      run: coveralls --service=github
